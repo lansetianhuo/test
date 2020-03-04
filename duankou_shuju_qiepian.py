@@ -1,5 +1,6 @@
 import re
-duankou_peizhi = """
+duankou_peizhi = ''
+"""
 端口配置
 """
 
@@ -30,4 +31,3 @@ for intface_sub_shuju in intface_sub:
     print(intface_sub_shuju)
     print('*' * 30)
 print(len(intface_sub))
-
