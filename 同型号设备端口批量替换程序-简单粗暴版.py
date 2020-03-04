@@ -89,6 +89,7 @@ def tihuan_duankou(peizhi, duankou_guanxibiao):
                 for guanxi in duankou_guanxibiao:
                     if str(peizhi_yuansu_neirong) == guanxi[0]:
                         peizhi_yuansu_neirong = guanxi[1]
+                        # 找到应该端口对应关系后，替换端口名，并跳出此循环
                         break
             hangshuju = hangshuju + peizhi_yuansu_neirong
         # duankou_tihuan_peizhi.append(hangshuju)
