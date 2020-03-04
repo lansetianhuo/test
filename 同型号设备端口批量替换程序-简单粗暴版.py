@@ -89,6 +89,7 @@ def tihuan_duankou(peizhi, duankou_guanxibiao):
                 for guanxi in duankou_guanxibiao:
                     if str(peizhi_yuansu_neirong) == guanxi[0]:
                         peizhi_yuansu_neirong = guanxi[1]
+                        break
             hangshuju = hangshuju + peizhi_yuansu_neirong
         # duankou_tihuan_peizhi.append(hangshuju)
         duankou_tihuan_peizhi = duankou_tihuan_peizhi + tuple([hangshuju])
