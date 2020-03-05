@@ -51,14 +51,15 @@ with open(peizhi_lujing, 'r', encoding='utf-8-sig') as peizhi_wanjian:
 
 def duankou_guanxi_yuanzu(duankou):
     """
-    本函数为新、老端口对关系列表处理函数，用于把端口对应该处理成元组，以便替换端口函数调用该元组。
-    使用元组存储端口对应关系以确保在程序通行时，端口对应关系不会被修改。
+    本函数为新、老端口对关系列表处理函数，用于把端口对应该处理成字典，以便替换端口函数调用该端口对应关系字典，
+    键为老设备端口、值为新设备端口。
+    使用字典存储端口对应关系以简化端口对应关系查找部分程序。
     函数有一个参数：
     duankou：将新、老端口对关系文件以字符串形式传给该函数，
     函数返回一个值：
-    duankou_yuanzu：为新、老端口对关系元组。
+    duankou_dict：为新、老端口对关系字典。
     """
-    duankou_liebiao = []
+    duankou_dict = {}
     duankou_biao = re.split('\n', duankou)
     for duankou_guanxi in duankou_biao:
         duankou_guanxi = duankou_guanxi.strip(' ')
@@ -68,9 +69,9 @@ def duankou_guanxi_yuanzu(duankou):
             duankou_guanxi = duankou_guanxi.replace('  ', ' ')
             guanxi_xuhao = range(duankou_guanxi.find('  '))
         duankou_guanxi = re.split(' ', duankou_guanxi)
-        duankou_liebiao.append(tuple(duankou_guanxi))
-    duankou_yuanzu = tuple(duankou_liebiao)
-    return duankou_yuanzu
+        duankou_dict_yuansu = {duankou_guanxi[0]: duankou_guanxi[1]}
+        duankou_dict.update(duankou_dict_yuansu)
+    return duankou_dict
 
 
 def tihuan_duankou(peizhi, duankou_guanxibiao):
@@ -78,7 +79,7 @@ def tihuan_duankou(peizhi, duankou_guanxibiao):
     本函数为替换文件中端口名称的函数。
     函数有两个参数：
     peizhi：将要修改端口的配置文件以字符串形式传给该函数
-    duankou_guanxibiao：将新、老端口对关系元组传给该函数
+    duankou_guanxibiao：将新、老端口对关系字典传给该函数
     函数返回一个值：
     duankou_tihuan_peizhi：返回端口名称替换后的配置文件列表
     """
@@ -86,7 +87,6 @@ def tihuan_duankou(peizhi, duankou_guanxibiao):
     peizhi_liebiao = (re.split('\n', peizhi))
     # 将列表转换成元组，以免程序处理时误修改原配置中数据
     peizhi_liebiao = tuple(peizhi_liebiao)
-    # duankou_tihuan_peizhi = []
     # 定义元组变量，用于存储替换后的配置信息
     duankou_tihuan_peizhi = ()
     # 从原配置元组逐一取出元素
@@ -98,19 +98,13 @@ def tihuan_duankou(peizhi, duankou_guanxibiao):
         # 定义元素临时存储变量，用于存储处理后的配置信息
         hangshuju = ""
         for peizhi_yuansu_neirong in peizhi_yuansu:
-            if peizhi_yuansu_neirong == ' ' or peizhi_yuansu_neirong == '.':
-                pass
-            else:
-                # 如果peizhi_yuansu_neirong内容不等于空格和.号，则从端口关系表中查看元素是否为老设备端口。
-                # 是则用相应新端口名替换peizhi_yuansu_neirong中值，并跳出端口关系查找循环；
-                # 不是则不对peizhi_yuansu_neirong中值作处理。
-                for guanxi in duankou_guanxibiao:
-                    if str(peizhi_yuansu_neirong) == guanxi[0]:
-                        peizhi_yuansu_neirong = guanxi[1]
-                        break
+            # 用元素作为字典键在端口关系字典中查找，如果有则用相应键替换peizhi_yuansu_neirong中的值，
+            # 如果没有返回none，if语句不成立，对peizhi_yuansu_neirong中值不作处理。
+            if duankou_guanxibiao.get(peizhi_yuansu_neirong, 'none') != 'none':
+                peizhi_yuansu_neirong = duankou_guanxibiao[
+                    peizhi_yuansu_neirong]
             # 将peizhi_yuansu_neirong中的值拼接成字符串hangshuju
             hangshuju = hangshuju + peizhi_yuansu_neirong
-        # duankou_tihuan_peizhi.append(hangshuju)
         # 将hangshuju字符串变换成元组，拼接成要返回的元组duankou_tihuan_peizhi
         duankou_tihuan_peizhi = duankou_tihuan_peizhi + tuple([hangshuju])
     return duankou_tihuan_peizhi
@@ -128,4 +122,3 @@ for tihuan_peizhi_tmp in duankou_tihuan_jieguo:
 tihuan_peizhi_lujin = r"D:\xuexi\cheshiwenjian\端口替换后配置.txt"
 with open(tihuan_peizhi_lujin, 'w') as tihuan_peizhi_wenjian:
     tihuan_peizhi_wenjian.write(tihuan_peizhi)
-print()
