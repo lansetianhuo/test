@@ -1,3 +1,16 @@
+#!/usr/bin/python3
+# -*- encoding: utf-8 -*-
+'''
+@文件     :   网络未使用IP查询-已用IP无掩码版.py
+@时间     :   2020/03/10 09:40:54
+@作者     :   lansetianhuo
+@版本     :   1.0
+@联系方式 :   24279100@qq.com
+@功能     :
+'''
+# Start typing your code from here
+
+
 import re
 from IPy import IP, IPSet
 

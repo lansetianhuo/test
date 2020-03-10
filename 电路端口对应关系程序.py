@@ -1,3 +1,15 @@
+#!/usr/bin/python3
+# -*- encoding: utf-8 -*-
+'''
+@文件     :   电路端口对应关系程序.py
+@时间     :   2020/03/10 09:39:33
+@作者     :   lansetianhuo
+@版本     :   1.0
+@联系方式 :   24279100@qq.com
+@功能     :
+'''
+# Start typing your code from here
+
 import re
 # 导入IP处理模块
 from IPy import IP

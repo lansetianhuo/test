@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
 '''
-@File    :   同型号设备端口批量替换程序-简单粗暴版.py
-@Time    :   2020/03/04 14:39:59
-@Author  :   lansetianhuo
-@Version :   1.0
-@Contact :   24279100@qq.com
-@WebSite :
+@文件     :   同型号设备端口批量替换程序-简单粗暴版(字典).py
+@时间     :   2020/03/10 09:40:31
+@作者     :   lansetianhuo
+@版本     :   1.0
+@联系方式 :   24279100@qq.com
+@功能     :
 '''
 # Start typing your code from here
+
 
 import re
 """
