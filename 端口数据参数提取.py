@@ -11,11 +11,22 @@ def inft_data_collect(intf_data_set):
         domain_name = 'none'
         description = 'none'
         ip_address_list = []
+        ipv6_address_list = []
         qos_profile_in = 'none'
         qos_profile_out = 'none'
         shutdown = 'none'
         vpn_name = 'none'
         traffic_policy = 'none'
+        vpls = 'none'
+        mtu = 'none'
+        isis_router = 'none'
+        isis_v6_router = 'none'
+        isis_type = 'none'
+        isis_level = 'none'
+        isis_v6_cost = 'none'
+        isis_cost = 'none'
+        isis_small_hello = 'none'
+
         intf_data_dict = {}
         for data_row in intf_data_list:
             data_row = data_row.strip(' ')
@@ -50,6 +61,9 @@ def inft_data_collect(intf_data_set):
             if data_row.startswith('ip address'):
                 ip_address = re.findall(r'ip address (.+)', data_row)
                 ip_address_list += ip_address
+            if data_row.startswith('ipv6 address') and not data_row.endswith('auto link-local'):
+                ipv6_address = re.findall(r'ipv6 address (.+)', data_row)
+                ipv6_address_list += ipv6_address
             if data_row.startswith('qos-profile'):
                 qos_profile = re.findall(
                     r'qos-profile (.+) inbound identifier none', data_row)
@@ -65,11 +79,30 @@ def inft_data_collect(intf_data_set):
                 vpn_name = data_row.replace('ip binding vpn-instance ', '')
             if data_row.startswith('traffic-policy'):
                 traffic_policy = data_row.replace('traffic-policy ', '')
+            if data_row.startswith('mpls l2vc'):
+                vpls = re.findall(r'mpls l2vc ((?:\d+.){3}\d+) (\d+)', data_row)[0]
+            if data_row.startswith('mtu'):
+                mtu = data_row.replace('mtu ', '')
+            if data_row.startswith('isis enable'):
+                isis_router = data_row.replace('isis enable ', '')
+            if data_row.startswith('isis ipv6 enable'):
+                isis_v6_router = data_row.replace('isis ipv6 enable ', '')
+            if data_row.startswith('isis circuit-type'):
+                isis_type = data_row.replace('isis circuit-type ', '')
+            if data_row.startswith('isis circuit-level'):
+                isis_level = data_row.replace('isis circuit-level ', '')
+            if data_row.startswith('isis ipv6 cost'):
+                isis_v6_cost = re.findall(r'isis ipv6 cost (\d+) ?', data_row)[0]
+            if data_row.startswith('isis cost'):
+                isis_cost = re.findall(r'isis cost (\d+) ?', data_row)[0]
+            if data_row.startswith('isis small-hello'):
+                isis_small_hello = data_row.replace('isis ', '')
 
         intf_data_dict['intf_name'] = intf_name
         intf_data_dict['description'] = description
         intf_data_dict['vlan_list'] = vlan_list
         intf_data_dict['ip_address_list'] = ip_address_list
+        intf_data_dict['ipv6_address_list'] = ipv6_address_list
         intf_data_dict['domain_name'] = domain_name
         intf_data_dict['vpn_name'] = vpn_name
         intf_data_dict['qos_profile_in'] = qos_profile_in
@@ -77,6 +110,26 @@ def inft_data_collect(intf_data_set):
         intf_data_dict['shutdown'] = shutdown
         intf_data_dict['vpn_name'] = vpn_name
         intf_data_dict['traffic_policy'] = traffic_policy
+        intf_data_dict['vpls'] = vpls
+        intf_data_dict['mtu'] = mtu
+        intf_data_dict['isis_router'] = mtu
+        intf_data_dict['isis_router'] = isis_router
+        intf_data_dict['isis_v6_router'] = isis_v6_router
+        intf_data_dict['isis_type'] = isis_type
+        intf_data_dict['isis_level'] = isis_level
+        intf_data_dict['isis_v6_cost'] = isis_v6_cost
+        intf_data_dict['isis_cost'] = isis_cost
+        intf_data_dict['isis_small_hello'] = isis_small_hello
+        if intf_data_dict['isis_router'] != 'none' or intf_data_dict['isis_v6_router'] != 'none':
+            intf_data_dict['inft_type'] = 'router_intf'
+        elif len(intf_data_dict['ip_address_list']) > 0 or len(intf_data_dict['ipv6_address_list']) > 0:
+            intf_data_dict['inft_type'] = 'gateway_intf'
+        elif intf_data_dict['domain_name'] != 'none':
+            intf_data_dict['inft_type'] = 'domain_intf'
+        elif intf_data_dict['vpls'] != 'none':
+            intf_data_dict['inft_type'] = 'vpls_intf'
+        else:
+            intf_data_dict['inft_type'] = 'other_intf'
         inft_data_dict_list.append(intf_data_dict)
     return inft_data_dict_list
 
@@ -108,7 +161,6 @@ def main():
     intface_data_list = read_data(data_file, read_data_name)
 
     inft_data_collect_dict = inft_data_collect(intface_data_list)
-
     write_data_name = 'intface_data_collect_dict_list'
     write_data(data_file, write_data_name, inft_data_collect_dict)
 
