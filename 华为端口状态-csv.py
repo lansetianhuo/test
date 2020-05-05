@@ -57,6 +57,7 @@ def inft_info_collect(phy_intf_list):
         tx_range = []
         input_bandwidth = 'none'
         output_bandwidth = 'none'
+        intf_optical = 'none'
 
         intf_info_dict = {}
         for data_row in intf_data_list:
@@ -66,24 +67,27 @@ def inft_info_collect(phy_intf_list):
                 intf_name = port_list[0]
                 phy_state = port_list[-1]
             if data_row.startswith('Line protocol current state'):
-                user_vlan_data = re.findall(
+                protocol_state = re.findall(
                     r'Line protocol current state : (\w+)', data_row)
             if data_row.startswith('Description:'):
                 description = data_row.replace('Description:', '')
-            if data_row.startswith('Port BW:'):
-                port_bw_list = re.split(r'[:,]', data_row)
-                port_bw = port_bw_list[1].strip(' ')
-                transceiver_mode = port_bw_list[-1].strip(' ')
-            if data_row.startswith('WaveLength:'):
-                distance = re.split(r'[:,]', data_row)[-1].strip(' ')
-            if data_row.startswith('Rx Power:'):
-                rx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
-                rx_power = rx_power_list[1].strip(' ')
-                rx_range = rx_power_list[-4:-2]
-            if data_row.startswith('Rx Power:'):
-                tx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
-                tx_power = tx_power_list[1].strip(' ')
-                tx_range = tx_power_list[-4:-2]
+            if not data_row.startswith('Optical transceiver is offline'):
+                if data_row.startswith('Port BW:'):
+                    port_bw_list = re.split(r'[:,]', data_row)
+                    port_bw = port_bw_list[1].strip(' ')
+                    transceiver_mode = port_bw_list[-1].strip(' ')
+                if data_row.startswith('WaveLength:'):
+                    distance = re.split(r'[:,]', data_row)[-1].strip(' ')
+                if data_row.startswith('Rx Power:'):
+                    rx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
+                    rx_power = rx_power_list[1].strip(' ')
+                    rx_range = rx_power_list[-4:-2]
+                if data_row.startswith('Rx Power:'):
+                    tx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
+                    tx_power = tx_power_list[1].strip(' ')
+                    tx_range = tx_power_list[-4:-2]
+            else:
+                intf_optical = '端口无模块'
             if data_row.startswith('Input bandwidth utilization'):
                 input_bandwidth = data_row.split(':')[1].strip(' ')
             if data_row.startswith('Output bandwidth utilization'):
@@ -97,15 +101,19 @@ def inft_info_collect(phy_intf_list):
         intf_info_dict['模块类型'] = transceiver_mode
         intf_info_dict['模块距离'] = distance
         intf_info_dict['收光'] = rx_power
-        intf_info_dict['收光范围'] = rx_range
+        intf_info_dict['收光范围'] = rx_range[:]
         intf_info_dict['发光'] = tx_power
-        intf_info_dict['发光范围'] = tx_range
+        intf_info_dict['发光范围'] = tx_range[:]
         intf_info_dict['入流量%'] = input_bandwidth
         intf_info_dict['出流量%'] = output_bandwidth
-        intf_info_dict['收光状态'] = '无模块'
+        intf_info_dict['收光状态'] = intf_optical
         if intf_info_dict['模块类型'] != 'none':
             if intf_info_dict['模块类型'] == "SingleMode":
                 intf_info_dict['模块类型'] = '单模'
+            if intf_info_dict['模块类型'] == "MultiMode":
+                intf_info_dict['模块类型'] = '多模'
+            if intf_info_dict['模块类型'] == "Copper Mode":
+                intf_info_dict['模块类型'] = '电口'
         if intf_info_dict['收光'] != 'none':
             if float(rx_range[0]) <= float(rx_power) <= float(rx_range[1]):
                 intf_info_dict['收光状态'] = '收光正常'
@@ -117,6 +125,8 @@ def inft_info_collect(phy_intf_list):
                 intf_info_dict['收光状态'] = '收光不正常'
 
         inft_info_dict_list.append(intf_info_dict)
+    if inft_info_dict_list[0]['端口名'] == 'GigabitEthernet0/0/0':
+        del inft_info_dict_list[0]
     return inft_info_dict_list
 
 
