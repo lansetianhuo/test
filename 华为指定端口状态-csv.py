@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
 """
-@文件     :   华为端口状态.py
-@时间     :   2020-5-4 15:20
+@文件     :   华为指定端口状态-csv.py
+@时间     :   2020-11-29 16:56
 @作者     :   lansetianhuo
 @版本     :   1.0
 @联系方式 :   24279100@qq.com
 @功能     :
 """
 # Start typing your code from here
+
 import re
 import csv
 
@@ -36,7 +37,7 @@ def data_section(data):
 def phy_intf_collect(data_list):
     phy_intf_list = []
     for data in data_list:
-        if data[0].startswith('GigabitEthernet'):
+        if data[1].startswith('GigabitEthernet'):
             phy_intf_list.append(data)
     return phy_intf_list
 
