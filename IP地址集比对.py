@@ -85,6 +85,7 @@ def main():
 
     not_used_ip_str = ""
     for not_used_ip in usable_ip_set:
+        not_used_ip.NoPrefixForSingleIp = None
         not_used_ip_str = not_used_ip_str + str(not_used_ip) + "\n"
 
     with open(not_used_ip_str_path, 'w') as file_not_used_ip:

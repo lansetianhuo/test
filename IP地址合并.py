@@ -56,7 +56,7 @@ def ip_format(ip_list):
 
 def main():
     # ip_str_path = input('IP地址表文件路径：')
-    ip_str_path = r'D:\xuexi\cheshiwenjian\平房FW07-地址集-i.txt'
+    ip_str_path = r'D:\xuexi\cheshiwenjian\221.177.36.txt'
 
     # ip_set_str_path = input('整合后IP地址集输出文件路径：')
     ip_set_str_path = r'D:\xuexi\cheshiwenjian\合并IP表.txt'
@@ -67,11 +67,13 @@ def main():
 
     ip_list = data_format(ip_list_str)
     ip_set_agg = ip_format(ip_list)
-    print(ip_set_agg)
+    #print(ip_set_agg)
 
 
     ip_set_agg_str = ""
+
     for ip_address_agg in ip_set_agg:
+        ip_address_agg.NoPrefixForSingleIp = None
         ip_set_agg_str = ip_set_agg_str + str(ip_address_agg) + "\n"
 
     with open(ip_set_str_path, 'w') as file_not_used_ip:
