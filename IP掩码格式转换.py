@@ -64,8 +64,8 @@ def output_file(file_path, output_str):
 
 
 def main():
-    file_path = r'D:\xuexi\cheshiwenjian\D设备汇总路由.txt'
-    out_file_path = r'D:\xuexi\cheshiwenjian\D设备汇总路由1.txt'
+    file_path = r'D:\xuexi\cheshiwenjian\IP反码.txt'
+    out_file_path = r'D:\xuexi\cheshiwenjian\IP反码1.txt'
     ip_str = read_file(file_path)
     ip_list = data_format(ip_str).copy()
     ip_list = col_data_format(ip_list).copy()
