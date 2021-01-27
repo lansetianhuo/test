@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # -*- encoding: utf-8 -*-
 """
-@文件     :   test1111
-@时间     :   2021-1-24 13:15
+@文件     :   查询共用IP地址段
+@时间     :   2021-1-27 18:56
 @作者     :   lansetianhuo
 @版本     :   1.0
 @联系方式 :   24279100@qq.com
@@ -63,9 +63,9 @@ def main():
     usable_ip_str_path = r'D:\xuexi\cheshiwenjian\平房FW07-地址集-i.txt'
     print(usable_ip_str_path)
 
-    # not_used_ip_str_path = input('未使用IP输出文件路径：')
-    not_used_ip_str_path = r'D:\xuexi\cheshiwenjian\学府不包含平房IP地址.txt'
-    print(not_used_ip_str_path)
+    # collection_ip_str_path = input('未使用IP输出文件路径：')
+    collection_ip_str_path = r'D:\xuexi\cheshiwenjian\相同IP地址段.txt'
+    print(collection_ip_str_path)
 
     with open(used_ip_str_path, 'r', encoding='utf-8-sig') as file_used_ip:
         used_ip_str = file_used_ip.read()
@@ -81,16 +81,13 @@ def main():
 
     collection_ip_set = used_ip_set & usable_ip_set
 
-    for used_ip_net in collection_ip_set:
-        usable_ip_list.discard(IP(used_ip_net))
-
-    not_used_ip_str = ""
-    for not_used_ip in usable_ip_set:
+    collection_ip_str = ""
+    for not_used_ip in collection_ip_set:
         not_used_ip.NoPrefixForSingleIp = None
-        not_used_ip_str = not_used_ip_str + str(not_used_ip) + "\n"
+        collection_ip_str = collection_ip_str + str(not_used_ip) + "\n"
 
-    with open(not_used_ip_str_path, 'w') as file_not_used_ip:
-        file_not_used_ip.write(not_used_ip_str)
+    with open(collection_ip_str_path, 'w') as file_not_used_ip:
+        file_not_used_ip.write(collection_ip_str)
 
 
 if __name__ == '__main__':
