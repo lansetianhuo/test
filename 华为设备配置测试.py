@@ -65,11 +65,20 @@ for ip_item in ip_list:
     log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
                   ':' + ip_item[1])
 
-    outcomm = connect.send_config_from_file(
-        config_file="comm.txt", cmd_verify=False)
-    log_str += '\n##############################\n' + outcomm
-    configfile = connect.send_command('dis cu')
-    log_str += '\n##############################\n' + configfile
-    out_file_path = rf'D:\xuexi\cheshiwenjian\{ip_item[0]}-log.txt'
-    output_file(out_file_path, log_str)
+    # outcomm = connect.send_config_from_file(
+    #     config_file="huawei_config.txt", cmd_verify=False)
+    # log_str += '\n##############################\n' + outcomm
+    conf1 = connect.send_command_timing('sy')
+    print(conf1)
+    conf2 = connect.send_command_timing('mpls')
+    print(conf2)
+    conf3 = connect.send_command_timing('q')
+    print(conf3)
+    conf3 = connect.send_command_timing('undo mpls')
+    print(conf3)
+    conf4 = connect.send_command_timing('y')
+    print(conf4)
+    # log_str += '\n##############################\n' + configfile
+    # out_file_path = rf'D:\xuexi\cheshiwenjian\{ip_item[0]}-log.txt'
+    # output_file(out_file_path, log_str)
     connect.disconnect()

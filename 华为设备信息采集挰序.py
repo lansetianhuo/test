@@ -17,6 +17,7 @@ import huawei_intf_status
 from tqdm import tqdm
 from time import sleep
 
+
 def ip_true(port_ip):
     ip_rule = re.compile(
         '^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$')
@@ -50,7 +51,7 @@ def output_file(file_path, output_str):
         file.write(output_str)
 
 
-read_file_path = r'D:\xuexi\cheshiwenjian\设备IP地址.txt'
+read_file_path = r'D:\xuexi\cheshiwenjian\华为设备IP地址.txt'
 now = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
 log_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
@@ -62,7 +63,7 @@ SW = {
     'port': '23',
     'password': getpass.getpass('设备密码：')
 }
-dev_tqdm = tqdm(ip_list,ncols=90)
+dev_tqdm = tqdm(ip_list, ncols=90)
 for ip_item in dev_tqdm:
 
     SW['ip'] = ip_item[1]
@@ -71,14 +72,15 @@ for ip_item in dev_tqdm:
     log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
                   ':' + ip_item[1])
 
-    info_col_log = connect.send_command('dis int main',strip_prompt=False,
-    strip_command=False)
+    info_col_log = connect.send_command('dis int main', strip_prompt=False,
+                                        strip_command=False)
+    connect.disconnect()
     log_str += '\n##############################\n' + info_col_log
     logout_file_path = rf'D:\xuexi\cheshiwenjian\{ip_item[0]}-log-{now}.txt'
     output_file(logout_file_path, log_str)
-    connect.disconnect()
+
     write_csv_path = rf'D:\xuexi\cheshiwenjian\{ip_item[0]}-{now}.csv'
 
     huawei_intf_status.inf_status(logout_file_path, write_csv_path)
     sleep(0.1)
-    dev_tqdm.set_description('Processing:'+ip_item[0])
+    dev_tqdm.set_description('Processing:' + ip_item[0])
