@@ -63,14 +63,14 @@ def inft_info_collect(phy_intf_list):
                 distance = intf_optical_list[1]
                 transceiver_mode = data_row[2].strip('nm')
 
-                rx_power_list = re.split(r'[\[/,\]]', data_row[3])
+                rx_power_list = re.split(r'[\[,\]]', data_row[3].replace('/',''))
                 rx_power = rx_power_list[0]
-                rx_low = rx_power_list[2]
-                rx_high = rx_power_list[3]
-                tx_power_list = re.split(r'[\[/,\]]', data_row[4])
+                rx_low = rx_power_list[1]
+                rx_high = rx_power_list[2]
+                tx_power_list = re.split(r'[\[,\]]', data_row[4].replace('/',''))
                 tx_power = tx_power_list[0]
-                tx_low = tx_power_list[2]
-                tx_high = tx_power_list[3]
+                tx_low = tx_power_list[1]
+                tx_high = tx_power_list[2]
 
                 # intf_info_dict['端口名'] = intf_name
                 intf_info_dict['模块类型'] = transceiver_mode
@@ -88,6 +88,8 @@ def inft_info_collect(phy_intf_list):
                 # if any(data_str in rx_low for data_str in rx_low_info):
                 if 'N' in rx_low or 'none' in rx_low:
                     intf_info_dict['收光状态'] = '收光范围不正常'
+                elif 'N' in rx_power:
+                    intf_info_dict['收光状态'] = '无收光'
                 elif float(rx_low) <= float(rx_power) <= float(rx_high):
                     intf_info_dict['收光状态'] = '收光正常'
                 elif float(rx_low) >= float(rx_power):

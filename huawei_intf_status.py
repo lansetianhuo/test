@@ -24,9 +24,10 @@ def data_section(data):
     section = data.split('\n')
     data_list = []
     data_setc_list = []
-        
+
     for data in section:
-        if data != '' and not data.startswith('<') and not data.startswith('['):
+        if data != '' and not data.startswith('<') and not data.startswith(
+                '[') and not data.startswith('dis'):
             data_setc_list.append(data)
         else:
             data_list.append(data_setc_list)
@@ -37,8 +38,9 @@ def data_section(data):
 def phy_intf_collect(data_list):
     phy_intf_list = []
     for data in data_list:
-        if len(data) >0:
-            if data[0].startswith('GigabitEthernet') or data[0].startswith('100GE'):
+        if len(data) > 0:
+            if data[0].startswith(
+                    'GigabitEthernet') or data[0].startswith('100GE'):
                 phy_intf_list.append(data)
 
     return phy_intf_list
@@ -65,7 +67,8 @@ def inft_GE_info_collect(intf_data_list):
         if data_row.startswith('GigabitEthernet'):
             port_list = data_row.split(' ')
             intf_name = port_list[0]
-            phy_state = port_list[4]
+            phy_state = re.findall(r': ([a-zA-Z]+ ?[a-zA-Z]+)', data_row)[0]
+
         if data_row.startswith('Line protocol current state'):
             protocol_state = re.findall(
                 r'Line protocol current state : (\w+)', data_row)
@@ -156,13 +159,15 @@ def inft_100GE_info_collect(intf_data_list):
     input_bandwidth = 'none'
     output_bandwidth = 'none'
     intf_optical = 'none'
+    rx_power_str = 'none'
+    tx_power_str = 'none'
     intf_info_dict = {}
     for data_row in intf_data_list:
         data_row = data_row.strip(' ')
         if data_row.startswith('100GE'):
             port_list = data_row.split(' ')
             intf_name = port_list[0]
-            phy_state = port_list[4]
+            phy_state = re.findall(r': ([a-zA-Z]+ ?[a-zA-Z]+)', data_row)[0]
         if data_row.startswith('Line protocol current state'):
             protocol_state = re.findall(
                 r'Line protocol current state : (\w+)', data_row)
@@ -171,7 +176,8 @@ def inft_100GE_info_collect(intf_data_list):
         if data_row.startswith('Description:'):
             description = data_row.replace('Description:', '')
         # if not data_row.startswith('Optical transceiver is offline'):
-        if data_row != 'Optical transceiver is offline!':
+        # if data_row != 'Optical transceiver is offline!':
+        if 'Optical transceiver is offline' not in data_row:
             # if data_row.startswith('Transceiver max BW:'):
             #     port_bw_list = re.split(r'[:,]', data_row)
             #     port_bw = '100G'
@@ -181,7 +187,8 @@ def inft_100GE_info_collect(intf_data_list):
                 port_bw = '100G'
                 transceiver_mode = port_bw_list[-1].strip(' ')
             if 'Transmission Distance:' in data_row:
-                distance = re.split(r'Transmission Distance:', data_row)[-1].strip(' ')
+                distance = re.split(r'Transmission Distance:',
+                                    data_row)[-1].strip(' ')
             if data_row.startswith('Rx warning range: ') or \
                     data_row.startswith('Rx Warning range: '):
                 rx_power_list = re.split(r',|\[|\]|dBm',
@@ -216,11 +223,11 @@ def inft_100GE_info_collect(intf_data_list):
             rx_power_str = 'none'
             tx_power_str = 'none'
 
-        if data_row.startswith(
-                'Input bandwidth utilization') or 'input utility rate' in data_row:
+        if data_row.startswith('Input bandwidth utilization') or (
+                'input utility rate' in data_row):
             input_bandwidth = data_row.split(':')[1].strip(' ')
-        if data_row.startswith(
-                'Output bandwidth utilization') or 'output utility rate' in data_row:
+        if data_row.startswith('Output bandwidth utilization') or (
+                'output utility rate' in data_row):
             output_bandwidth = data_row.split(':')[1].strip(' ')
 
     intf_info_dict['端口名'] = intf_name
@@ -264,8 +271,8 @@ def inft_100GE_info_collect(intf_data_list):
 def inft_info_collect(phy_intf_list):
     inft_info_dict_list = []
     for intf_data_list in phy_intf_list:
-        if intf_data_list[0].startswith(
-                'GigabitEthernet') and not intf_data_list[0].startswith('GigabitEthernet0/0/0'):
+        if intf_data_list[0].startswith('GigabitEthernet') and (
+                not intf_data_list[0].startswith('GigabitEthernet0/0/0')):
             inft_info_dict_list.append(inft_GE_info_collect(intf_data_list))
         elif intf_data_list[0].startswith('100GE'):
             inft_info_dict_list.append(inft_100GE_info_collect(intf_data_list))
