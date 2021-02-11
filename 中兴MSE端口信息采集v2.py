@@ -43,15 +43,15 @@ def inft_power_collect(phy_intf_power_list):
         # intf_name_keywords):
         if 'gei' in power_data_row[0]:
             # if data_row[0].find('gei') != -1:
-            intf_name = 'none'
+            # intf_name = 'none'
             transceiver_mode = 'none'
-            bw = 'none'
+            port_bw = 'none'
             distance = 'none'
             rx_power = 'none'
             rx_low = 'none'
             rx_high = 'none'
             tx_power = 'none'
-            intf_optical = 'none'
+            # intf_optical = 'none'
 
             intf_power_dict = {}
             intf_optical = power_data_row[1]
@@ -59,7 +59,7 @@ def inft_power_collect(phy_intf_power_list):
             if intf_optical != 'offline':
                 # intf_name = data_row[0]
                 intf_optical_list = re.split(r'-', intf_optical)
-                bw = intf_optical_list[0]
+                port_bw = intf_optical_list[0]
                 distance = intf_optical_list[1]
                 transceiver_mode = power_data_row[2].strip('nm')
 
@@ -77,10 +77,10 @@ def inft_power_collect(phy_intf_power_list):
                 tx_high = tx_power_list[2]
 
                 # intf_info_dict['端口名'] = intf_name
-                intf_power_dict['管理状态'] ='none'
+                intf_power_dict['管理状态'] = 'none'
                 intf_power_dict['物理状态'] = 'none'
                 intf_power_dict['模块类型'] = transceiver_mode
-                intf_power_dict['带宽'] = bw
+                intf_power_dict['带宽'] = port_bw
                 intf_power_dict['模块距离'] = distance
                 intf_power_dict['收光'] = rx_power
                 intf_power_dict['收光范围'] = [rx_low, rx_high]
@@ -93,7 +93,7 @@ def inft_power_collect(phy_intf_power_list):
             if intf_optical == 'offline':
                 intf_power_dict['收光状态'] = '端口无模块'
                 intf_power_dict['模块类型'] = transceiver_mode
-                intf_power_dict['带宽'] = bw
+                intf_power_dict['带宽'] = port_bw
                 intf_power_dict['模块距离'] = distance
                 intf_power_dict['收光'] = rx_power
                 intf_power_dict['收光范围'] = [rx_low, rx_high]
@@ -118,8 +118,8 @@ def inft_power_collect(phy_intf_power_list):
                     intf_power_dict['模块类型'] = '单模'
                 else:
                     intf_power_dict['模块类型'] = '多模'
-                if not bw.endswith('G'):
-                    intf_power_dict['带宽'] = str(int(bw) / 1000) + 'G'
+                if not port_bw.endswith('G'):
+                    intf_power_dict['带宽'] = str(int(port_bw) / 1000) + 'G'
             inft_power_dict_list.append(intf_power_dict)
 
     return inft_power_dict_list
@@ -138,15 +138,15 @@ def inft_flow_collect(phy_intf_flow_list):
             flow_out = '0'
             name_list = re.split(r'-', flow_data_row[0])
             if name_list[0] == 'gei':
-                bw = '1G'
+                port_bw = '1G'
             elif name_list[0] == 'xgei':
-                bw = '10G'
+                port_bw = '10G'
             elif name_list[0] == 'cgei':
-                bw = '100G'
+                port_bw = '100G'
 
             intf_flow_dict = {}
             intf_flow_dict['端口名'] = flow_data_row[0]
-            intf_flow_dict['带宽'] = bw
+            intf_flow_dict['带宽'] = port_bw
             intf_flow_dict['入流量'] = flow_data_row[1] + '%'
             intf_flow_dict['出流量'] = flow_data_row[2] + '%'
             intf_flow_dict['端口描述'] = 'none'
@@ -204,7 +204,6 @@ def main():
     status_data_list = data_section(status_data_str)
     inft_status_dict_list = inft_status_collect(status_data_list)
 
-
     for intf_power_list in inft_power_dict_list:
         intf_power_list['管理状态'] = 'none'
         intf_power_list['物理状态'] = 'none'
@@ -213,12 +212,14 @@ def main():
                 intf_power_list['入流量'] = intf_flow_list['入流量']
                 intf_power_list['出流量'] = intf_flow_list['出流量']
                 intf_power_list['端口描述'] = intf_flow_list['端口描述']
+                break
 
         for intf_status_list in inft_status_dict_list:
             if intf_power_list['端口名'] == intf_status_list['端口名']:
                 intf_power_list['管理状态'] = intf_status_list['管理状态']
                 intf_power_list['物理状态'] = intf_status_list['物理状态']
                 intf_power_list['带宽'] = intf_status_list['带宽']
+                break
 
     write_csv(write_file_path, inft_power_dict_list)
 
