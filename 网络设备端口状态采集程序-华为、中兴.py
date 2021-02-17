@@ -52,13 +52,18 @@ def output_file(file_path, output_str):
 
 
 def huawei_collect_analysis(ip_item, dev_list):
-    dev_list['device_type'] = 'huawei_telnet'
+    if ip_item[3] == 'telnet':
+        dev_list['device_type'] = 'huawei_telnet'
+    elif ip_item[3] == 'ssh':
+        dev_list['device_type'] = 'huawei'
+
     c_start_time = time.time()
 
     print(
         f'{ip_item[0]}:采集开始！时间{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_start_time))}秒')
     connect = ConnectHandler(**dev_list)
-    hostname = connect.send_command('display current-configuration | include sysname')[8:]
+    hostname = connect.send_command(
+        'display current-configuration | include sysname')[8:]
     info_col_log = connect.send_command('dis int main', strip_prompt=False,
                                         strip_command=False)
     connect.disconnect()
@@ -78,7 +83,10 @@ def huawei_collect_analysis(ip_item, dev_list):
 
 
 def zte_collect_analysis(ip_item, dev_list):
-    dev_list['device_type'] = 'zte_zxros_telnet'
+    if ip_item[3] == 'telnet':
+        dev_list['device_type'] = 'zte_zxros_telnet'
+    elif ip_item[3] == 'ssh':
+        dev_list['device_type'] = 'zte_zxros'
     c_start_time = time.time()
 
     print(
@@ -89,7 +97,6 @@ def zte_collect_analysis(ip_item, dev_list):
         strip_prompt=False,
         strip_command=False).splitlines()[2]
     hostname_log = connect.send_command('show hostname')
-
 
     version_id = re.findall(r'.\((\d+.\d+).', version_log)[0]
     if float(version_id) < 3.0:
@@ -157,9 +164,9 @@ def zte_collect_analysis(ip_item, dev_list):
 
 
 def collect_analysis(ip_item, dev_list):
-    if ip_item[3] == 'huawei':
+    if ip_item[4] == 'huawei':
         huawei_collect_analysis(ip_item, dev_list)
-    elif ip_item[3] == 'zte':
+    elif ip_item[4] == 'zte':
         zte_collect_analysis(ip_item, dev_list)
 
 
