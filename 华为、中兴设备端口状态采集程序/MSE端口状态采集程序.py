@@ -59,6 +59,7 @@ def huawei_collect_analysis(ip_item, dev_list):
     print(
         f'{ip_item[0]}:采集开始！时间{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_start_time))}秒')
     connect = ConnectHandler(**dev_list)
+    hostname = connect.send_command('display current-configuration | include sysname')[8:]
     info_col_log = connect.send_command('dis int main', strip_prompt=False,
                                         strip_command=False)
     connect.disconnect()
@@ -67,11 +68,11 @@ def huawei_collect_analysis(ip_item, dev_list):
     log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
                   ':' + ip_item[1] + ':' + dev_list['port'])
     log_str += '\n##############################\n' + info_col_log
-    logout_file_path = rf'.\采集日志\{ip_item[0]}-log-{now}.txt'
+    logout_file_path = rf'.\采集日志\{hostname}-log-{now}.txt'
 
     output_file(logout_file_path, log_str)
 
-    write_csv_path = rf'.\采集结果\{ip_item[0]}-{now}.csv'
+    write_csv_path = rf'.\采集结果\{hostname}-{now}.csv'
 
     huawei_intf_status.inf_status(logout_file_path, write_csv_path)
     end_time = time.time()
@@ -88,6 +89,7 @@ def zte_collect_analysis(ip_item, dev_list):
         'show version',
         strip_prompt=False,
         strip_command=False).splitlines()[2]
+    hostname_log = connect.send_command('show hostname')
 
     version_id = re.findall(r'.\((\d+.\d+).', version_log)[0]
     if float(version_id) < 3.0:
@@ -103,10 +105,10 @@ def zte_collect_analysis(ip_item, dev_list):
 
         log_str += '\n##############################\n' + optical_info_log
 
-        optical_file_path = rf'.\采集日志\{ip_item[0]}-optical-log-{now}.txt'
+        optical_file_path = rf'.\采集日志\{hostname_log}-optical-log-{now}.txt'
         output_file(optical_file_path, log_str)
 
-        write_csv_path = rf'.\采集结果\{ip_item[0]}-{now}.csv'
+        write_csv_path = rf'.\采集结果\{hostname_log}-{now}.csv'
 
         zte_intf_status.zte_inf_status_v2(optical_file_path, write_csv_path)
         end_time = time.time()
@@ -136,14 +138,14 @@ def zte_collect_analysis(ip_item, dev_list):
         optical_log_str += '\n##############################\n' + optical_info_log
         flow_log_str += '\n##############################\n' + flow_info_log
         intf_desc_log_str += '\n##############################\n' + intf_desc_info_log
-        optical_file_path = rf'.\采集日志\{ip_item[0]}-optical-log-{now}.txt'
+        optical_file_path = rf'.\采集日志\{hostname_log}-optical-log-{now}.txt'
         output_file(optical_file_path, optical_log_str)
-        flow_file_path = rf'.\采集日志\{ip_item[0]}-flow-log-{now}.txt'
+        flow_file_path = rf'.\采集日志\{hostname_log}-flow-log-{now}.txt'
         output_file(flow_file_path, flow_log_str)
-        intf_desc_file_path = rf'.\采集日志\{ip_item[0]}-intf-desc-log-{now}.txt'
+        intf_desc_file_path = rf'.\采集日志\{hostname_log}-intf-desc-log-{now}.txt'
         output_file(intf_desc_file_path, intf_desc_log_str)
 
-        write_csv_path = rf'.\采集结果\{ip_item[0]}-{now}.csv'
+        write_csv_path = rf'.\采集结果\{hostname_log}-{now}.csv'
 
         zte_intf_status.zte_inf_status_v3(
             optical_file_path,
