@@ -10,12 +10,13 @@
 """
 # Start typing your code from here
 import time
-from netmiko import ConnectHandler
+from netmiko import ConnectHandler, NetmikoTimeoutException, NetmikoAuthenticationException
 import re
 import getpass
 import huawei_intf_status
 import zte_intf_status
 from concurrent.futures import ThreadPoolExecutor
+import os
 
 
 def ip_true(port_ip):
@@ -61,25 +62,42 @@ def huawei_collect_analysis(ip_item, dev_list):
 
     print(
         f'{ip_item[0]}:采集开始！时间{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_start_time))}秒')
-    connect = ConnectHandler(**dev_list)
-    hostname = connect.send_command(
-        'display current-configuration | include sysname')[8:]
-    info_col_log = connect.send_command('dis int main', strip_prompt=False,
-                                        strip_command=False)
-    connect.disconnect()
-    c_end_time = time.time()
-    print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
-    log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
-                  ':' + ip_item[1] + ':' + dev_list['port'])
-    log_str += '\n##############################\n' + info_col_log
-    logout_file_path = rf'D:\xuexi\cheshiwenjian\{hostname}-log-{now}.txt'
-    output_file(logout_file_path, log_str)
+    try:
+        connect = ConnectHandler(**dev_list)
+    except NetmikoAuthenticationException:  # 认证失败报错记录
+        print(ip_item[0], '认证失败！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':认证失败!！\n')
+        connect_err.close()
+    except NetmikoTimeoutException:  # 登录超时报错记录
+        print(ip_item[0], '连接超时！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':连接超时！\n')
+        connect_err.close()
+    except ConnectionRefusedError:  # 拒绝连接报错记录
+        print(ip_item[0], '拒绝连接！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':拒绝连接！\n')
+        connect_err.close()
+    else:
+        hostname = connect.send_command(
+            'display current-configuration | include sysname')[8:]
+        info_col_log = connect.send_command('dis int main', strip_prompt=False,
+                                            strip_command=False)
+        connect.disconnect()
+        c_end_time = time.time()
+        print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
+        log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
+                      ':' + ip_item[1] + ':' + dev_list['port'])
+        log_str += '\n##############################\n' + info_col_log
+        logout_file_path = rf'D:\xuexi\cheshiwenjian\{hostname}-log-{now}.txt'
+        output_file(logout_file_path, log_str)
 
-    write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname}-{now}.csv'
+        write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname}-{now}.csv'
 
-    huawei_intf_status.inf_status(logout_file_path, write_csv_path)
-    end_time = time.time()
-    print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
+        huawei_intf_status.inf_status(logout_file_path, write_csv_path)
+        end_time = time.time()
+        print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
 
 
 def zte_collect_analysis(ip_item, dev_list):
@@ -91,82 +109,120 @@ def zte_collect_analysis(ip_item, dev_list):
 
     print(
         f'{ip_item[0]}:采集开始！时间{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_start_time))}秒')
-    connect = ConnectHandler(**dev_list)
-    version_log = connect.send_command(
-        'show version',
-        strip_prompt=False,
-        strip_command=False).splitlines()[2]
-    hostname_log = connect.send_command('show hostname')
-
-    version_id = re.findall(r'.\((\d+.\d+).', version_log)[0]
-    if float(version_id) < 3.0:
-        optical_info_log = connect.send_command(
-            'show intf-statistics utilization phy-interface-only',
-            strip_prompt=False,
-            strip_command=False)
-        connect.disconnect()
-        c_end_time = time.time()
-        print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
-        log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
-                      ':' + ip_item[1] + ':' + dev_list['port'])
-
-        log_str += '\n##############################\n' + optical_info_log
-
-        optical_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-optical-log-{now}.txt'
-        output_file(optical_file_path, log_str)
-
-        write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-{now}.csv'
-
-        zte_intf_status.zte_inf_status_v2(optical_file_path, write_csv_path)
-        end_time = time.time()
-        print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
-
+    try:
+        connect = ConnectHandler(**dev_list)
+    except NetmikoAuthenticationException:  # 认证失败报错记录
+        print(ip_item[0], '认证失败！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':认证失败!！\n')
+        connect_err.close()
+    except NetmikoTimeoutException:  # 登录超时报错记录
+        print(ip_item[0], '连接超时！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':连接超时！\n')
+        connect_err.close()
+    except ConnectionRefusedError:  # 拒绝连接报错记录
+        print(ip_item[0], '拒绝连接！')
+        connect_err = open(rf'D:\xuexi\cheshiwenjian\{ip_item[0]}_登录错误_{now}.txt', 'a')
+        connect_err.write(ip_item[0] + ':拒绝连接！\n')
+        connect_err.close()
     else:
-        optical_info_log = connect.send_command(
-            'show opticalinfo brief',
+        version_log = connect.send_command(
+            'show version',
             strip_prompt=False,
-            strip_command=False)
-        flow_info_log = connect.send_command(
-            'show intf-statistics utilization phy-interface-only',
-            strip_prompt=False,
-            strip_command=False)
-        intf_desc_info_log = connect.send_command(
-            'show interface brief',
-            strip_prompt=False,
-            strip_command=False)
-        connect.disconnect()
-        c_end_time = time.time()
-        print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
-        log_str = str(log_time + 'Successfully connected to ' + ip_item[0] +
-                      ':' + ip_item[1] + ':' + dev_list['port'])
-        optical_log_str = log_str
-        flow_log_str = log_str
-        intf_desc_log_str = log_str
-        optical_log_str += '\n##############################\n' + optical_info_log
-        flow_log_str += '\n##############################\n' + flow_info_log
-        intf_desc_log_str += '\n##############################\n' + intf_desc_info_log
-        optical_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-optical-log-{now}.txt'
-        output_file(optical_file_path, optical_log_str)
-        flow_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-flow-log-{now}.txt'
-        output_file(flow_file_path, flow_log_str)
-        intf_desc_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-intf-desc-log-{now}.txt'
-        output_file(intf_desc_file_path, intf_desc_log_str)
+            strip_command=False).splitlines()[2]
+        hostname_log = connect.send_command('show hostname')
 
-        write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-{now}.csv'
+        version_id = re.findall(r'.\((\d+.\d+).', version_log)[0]
+        if float(version_id) < 3.0:
+            optical_info_log = connect.send_command(
+                'show intf-statistics utilization phy-interface-only',
+                strip_prompt=False,
+                strip_command=False)
+            connect.disconnect()
+            c_end_time = time.time()
+            print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
+            log_str = str(
+                log_time +
+                'Successfully connected to ' +
+                ip_item[0] +
+                ':' +
+                ip_item[1] +
+                ':' +
+                dev_list['port'])
 
-        zte_intf_status.zte_inf_status_v3(
-            optical_file_path,
-            flow_file_path,
-            intf_desc_file_path,
-            write_csv_path)
-        end_time = time.time()
-        print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
+            log_str += '\n##############################\n' + optical_info_log
+
+            optical_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-optical-log-{now}.txt'
+            output_file(optical_file_path, log_str)
+
+            write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-{now}.csv'
+
+            zte_intf_status.zte_inf_status_v2(
+                optical_file_path, write_csv_path)
+            end_time = time.time()
+            print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
+
+        else:
+            optical_info_log = connect.send_command(
+                'show opticalinfo brief',
+                strip_prompt=False,
+                strip_command=False)
+            flow_info_log = connect.send_command(
+                'show intf-statistics utilization phy-interface-only',
+                strip_prompt=False,
+                strip_command=False)
+            intf_desc_info_log = connect.send_command(
+                'show interface brief',
+                strip_prompt=False,
+                strip_command=False)
+            connect.disconnect()
+            c_end_time = time.time()
+            print(f'{ip_item[0]}:采集完成！耗时{c_end_time - c_start_time:.3f}秒')
+            log_str = str(
+                log_time +
+                'Successfully connected to ' +
+                ip_item[0] +
+                ':' +
+                ip_item[1] +
+                ':' +
+                dev_list['port'])
+            optical_log_str = log_str
+            flow_log_str = log_str
+            intf_desc_log_str = log_str
+            optical_log_str += '\n##############################\n' + optical_info_log
+            flow_log_str += '\n##############################\n' + flow_info_log
+            intf_desc_log_str += '\n##############################\n' + intf_desc_info_log
+            optical_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-optical-log-{now}.txt'
+            output_file(optical_file_path, optical_log_str)
+            flow_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-flow-log-{now}.txt'
+            output_file(flow_file_path, flow_log_str)
+            intf_desc_file_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-intf-desc-log-{now}.txt'
+            output_file(intf_desc_file_path, intf_desc_log_str)
+
+            write_csv_path = rf'D:\xuexi\cheshiwenjian\{hostname_log}-{now}.csv'
+
+            zte_intf_status.zte_inf_status_v3(
+                optical_file_path,
+                flow_file_path,
+                intf_desc_file_path,
+                write_csv_path)
+            end_time = time.time()
+            print(f'{ip_item[0]}:提取完成！耗时{end_time - c_end_time:.3f}秒')
 
 
 def collect_analysis(ip_item, dev_list):
     if ip_item[4] == 'huawei':
+        # if ip_item[3] == 'telnet':
+        #     dev_list['device_type'] = 'huawei_telnet'
+        # elif ip_item[3] == 'ssh':
+        #     dev_list['device_type'] = 'huawei'
         huawei_collect_analysis(ip_item, dev_list)
     elif ip_item[4] == 'zte':
+        # if ip_item[3] == 'telnet':
+        #     dev_list['device_type'] = 'zte_zxros_telnet'
+        # elif ip_item[3] == 'ssh':
+        #     dev_list['device_type'] = 'zte_zxros'
         zte_collect_analysis(ip_item, dev_list)
 
 
