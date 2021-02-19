@@ -10,15 +10,7 @@
 """
 # Start typing your code from here
 import re
-import csv
-
-
-def read_file(file_path):
-    with open(file_path, 'r', encoding='UTF-8-sig') as file:
-        data_str = file.read()
-        data_str = data_str.strip(' ')
-        data_str = data_str.strip('\n')
-    return data_str
+import file_func
 
 
 def data_section(data_str):
@@ -35,7 +27,7 @@ def data_section(data_str):
     return col_data_list
 
 
-def inft_power_collect_v3(phy_intf_power_list):
+def inft_power_collect_v3(phy_intf_power_list, hostname, dev_ip, dev_factory):
     inft_power_dict_list = []
     for power_data_row in phy_intf_power_list:
         # intf_name_keywords=['gei','xgei','cgei']
@@ -52,8 +44,9 @@ def inft_power_collect_v3(phy_intf_power_list):
             rx_high = 'none'
             tx_power = 'none'
             # intf_optical = 'none'
-
             intf_power_dict = {}
+            intf_power_dict['设备名'] = hostname
+            intf_power_dict['设备IP'] = dev_ip
             intf_optical = power_data_row[1]
             intf_power_dict['端口名'] = power_data_row[0]
             if intf_optical != 'offline':
@@ -79,17 +72,19 @@ def inft_power_collect_v3(phy_intf_power_list):
                 # intf_info_dict['端口名'] = intf_name
                 intf_power_dict['管理状态'] = 'none'
                 intf_power_dict['物理状态'] = 'none'
-                intf_power_dict['模块类型'] = transceiver_mode
+                intf_power_dict['协议状态'] = 'none'
+                intf_power_dict['端口描述'] = 'none'
                 intf_power_dict['带宽'] = port_bw
+                intf_power_dict['模块类型'] = transceiver_mode
                 intf_power_dict['模块距离'] = distance
                 intf_power_dict['收光'] = rx_power
                 intf_power_dict['收光范围'] = [rx_low, rx_high]
                 intf_power_dict['发光'] = tx_power
+                intf_power_dict['发光范围'] = [tx_low, tx_high]
+                intf_power_dict['入流量%'] = 'none'
+                intf_power_dict['出流量%'] = 'none'
                 intf_power_dict['收光状态'] = intf_optical
-                intf_power_dict['入流量'] = 'none'
-                intf_power_dict['出流量'] = 'none'
-                intf_power_dict['端口描述'] = 'none'
-
+                intf_power_dict['设备厂商'] = dev_factory
             if intf_optical == 'offline':
                 intf_power_dict['收光状态'] = '端口无模块'
                 intf_power_dict['模块类型'] = transceiver_mode
@@ -121,7 +116,6 @@ def inft_power_collect_v3(phy_intf_power_list):
                 if not port_bw.endswith('G'):
                     intf_power_dict['带宽'] = str(int(port_bw) / 1000) + 'G'
             inft_power_dict_list.append(intf_power_dict)
-
     return inft_power_dict_list
 
 
@@ -147,8 +141,8 @@ def inft_flow_collect(phy_intf_flow_list):
             intf_flow_dict = {}
             intf_flow_dict['端口名'] = flow_data_row[0]
             intf_flow_dict['带宽'] = port_bw
-            intf_flow_dict['入流量'] = flow_data_row[1] + '%'
-            intf_flow_dict['出流量'] = flow_data_row[2] + '%'
+            intf_flow_dict['入流量%'] = flow_data_row[1] + '%'
+            intf_flow_dict['出流量%'] = flow_data_row[2] + '%'
             intf_flow_dict['端口描述'] = 'none'
             if len(flow_data_row) > 4:
                 intf_flow_dict['端口描述'] = ''.join(flow_data_row[4:])
@@ -157,7 +151,7 @@ def inft_flow_collect(phy_intf_flow_list):
     return inft_flow_dict_list
 
 
-def inft_status_collect(phy_intf_status_list):
+def inft_status_collectv3(phy_intf_status_list):
     inft_status_dict_list = []
     for status_data_row in phy_intf_status_list:
         # intf_name_keywords=['gei','xgei','cgei']
@@ -174,47 +168,39 @@ def inft_status_collect(phy_intf_status_list):
             intf_status_dict['端口名'] = status_data_row[0]
             intf_status_dict['管理状态'] = status_data_row[4]
             intf_status_dict['物理状态'] = status_data_row[5]
+            intf_status_dict['协议状态'] = status_data_row[6]
             intf_status_dict['带宽'] = str(int(status_data_row[3]) // 1000) + 'G'
             inft_status_dict_list.append(intf_status_dict)
     return inft_status_dict_list
-
-
-def write_csv(file_name, dict_list):
-    headers = dict_list[0].keys()
-    with open(file_name, 'w', encoding='utf-8-sig', newline='') as file:
-        file_dict = csv.DictWriter(file, headers)
-        file_dict.writeheader()
-        file_dict.writerows(dict_list)
 
 
 def zte_inf_status_v3(
         optical_file_path,
         flow_file_path,
         intf_desc_file_path,
-        write_csv_path):
-    # optical_file_path = r'D:\xuexi\cheshiwenjian\中兴MSE端口收光.txt'
-    # flow_file_path = r'D:\xuexi\cheshiwenjian\中兴MSE流量-新.txt'
-    # intf_desc_file_path = r'D:\xuexi\cheshiwenjian\中兴MSE端状态.txt'
-    # write_csv_path = r'D:\xuexi\cheshiwenjian\中兴MSE端口信息-新.csv'
-    power_data_str = read_file(optical_file_path)
-    power_data_list = data_section(power_data_str)
-    inft_power_dict_list = inft_power_collect_v3(power_data_list)
+        write_csv_path, hostname, dev_ip, dev_factory):
 
-    flow_data_str = read_file(flow_file_path)
+    power_data_str = file_func.read_file(optical_file_path)
+    power_data_list = data_section(power_data_str)
+    inft_power_dict_list = inft_power_collect_v3(
+        power_data_list, hostname, dev_ip, dev_factory)
+
+    flow_data_str = file_func.read_file(flow_file_path)
     flow_data_list = data_section(flow_data_str)
     inft_flow_dict_list = inft_flow_collect(flow_data_list)
 
-    status_data_str = read_file(intf_desc_file_path)
+    status_data_str = file_func.read_file(intf_desc_file_path)
     status_data_list = data_section(status_data_str)
-    inft_status_dict_list = inft_status_collect(status_data_list)
+    inft_status_dict_list = inft_status_collectv3(status_data_list)
 
     for intf_power_list in inft_power_dict_list:
         intf_power_list['管理状态'] = 'none'
         intf_power_list['物理状态'] = 'none'
+        intf_power_list['协议状态'] = 'none'
         for intf_flow_list in inft_flow_dict_list:
             if intf_power_list['端口名'] == intf_flow_list['端口名']:
-                intf_power_list['入流量'] = intf_flow_list['入流量']
-                intf_power_list['出流量'] = intf_flow_list['出流量']
+                intf_power_list['入流量%'] = intf_flow_list['入流量%']
+                intf_power_list['出流量%'] = intf_flow_list['出流量%']
                 intf_power_list['端口描述'] = intf_flow_list['端口描述']
                 break
 
@@ -222,13 +208,15 @@ def zte_inf_status_v3(
             if intf_power_list['端口名'] == intf_status_list['端口名']:
                 intf_power_list['管理状态'] = intf_status_list['管理状态']
                 intf_power_list['物理状态'] = intf_status_list['物理状态']
+                intf_power_list['协议状态'] = intf_status_list['协议状态']
                 intf_power_list['带宽'] = intf_status_list['带宽']
                 break
 
-    write_csv(write_csv_path, inft_power_dict_list)
+    file_func.write_csv(write_csv_path, inft_power_dict_list)
+    return inft_power_dict_list
 
 
-def inft_power_collect_v2(phy_intf_list):
+def inft_power_collect_v2(phy_intf_list, hostname, dev_ip, dev_factory):
     inft_info_dict_list = []
     for data_row in phy_intf_list:
         # intf_name_keywords=['gei','xgei','cgei']
@@ -251,12 +239,24 @@ def inft_power_collect_v2(phy_intf_list):
                 bw = '100G'
 
             intf_info_dict = {}
+            intf_info_dict['设备名'] = hostname
+            intf_info_dict['设备IP'] = dev_ip
             intf_info_dict['端口名'] = data_row[0]
+            intf_info_dict['管理状态'] = 'none'
+            intf_info_dict['物理状态'] = 'none'
+            intf_info_dict['协议状态'] = 'none'
+            intf_info_dict['端口描述'] = 'none'
             intf_info_dict['带宽'] = bw
+            intf_info_dict['模块类型'] = 'none'
+            intf_info_dict['模块距离'] = 'none'
             intf_info_dict['收光'] = data_row[6]
+            intf_info_dict['收光范围'] = 'none'
             intf_info_dict['发光'] = data_row[7]
-            intf_info_dict['入流量'] = data_row[2] + '%'
-            intf_info_dict['出流量'] = data_row[4] + '%'
+            intf_info_dict['发光范围'] = 'none'
+            intf_info_dict['入流量%'] = data_row[2] + '%'
+            intf_info_dict['出流量%'] = data_row[4] + '%'
+            intf_info_dict['收光状态'] = 'none'
+            intf_info_dict['设备厂商'] = dev_factory
 
             if 'N/A' in rx_power:
                 intf_info_dict['收光状态'] = '无收光'
@@ -264,10 +264,50 @@ def inft_power_collect_v2(phy_intf_list):
     return inft_info_dict_list
 
 
-def zte_inf_status_v2(optical_file_path, write_csv_path):
-    # read_file_path = r'D:\xuexi\cheshiwenjian\中兴MSE端口收光-老.txt'
-    # write_file_path = r'D:\xuexi\cheshiwenjian\中兴MSE端口类型-老.csv'
-    data_str = read_file(optical_file_path)
-    data_list = data_section(data_str)
-    inft_info_dict_list = inft_power_collect_v2(data_list)
-    write_csv(write_csv_path, inft_info_dict_list)
+def inft_status_collectv2(phy_intf_status_list):
+    inft_status_dict_list = []
+    for status_data_row in phy_intf_status_list:
+        # intf_name_keywords=['gei','xgei','cgei']
+        # if any(name_keyword in data_row[0] for name_keyword in
+        # intf_name_keywords):
+        if 'gei' in status_data_row[0]:
+            # if data_row[0].find('gei') != -1:
+            intf_name = 'none'
+            admin_status = 'down'
+            phy_status = 'down'
+            intf_bw = '0'
+            intf_status_dict = {}
+
+            intf_status_dict['端口名'] = status_data_row[0]
+            intf_status_dict['管理状态'] = status_data_row[1]
+            intf_status_dict['物理状态'] = status_data_row[2]
+            intf_status_dict['协议状态'] = status_data_row[3]
+            intf_status_dict['端口描述'] = status_data_row[4]
+            inft_status_dict_list.append(intf_status_dict)
+    return inft_status_dict_list
+
+
+def zte_inf_status_v2(
+        optical_file_path,intf_desc_file_path,write_csv_path,hostname,dev_ip,dev_factory):
+
+    power_data_str = file_func.read_file(optical_file_path)
+    power_data_list = data_section(power_data_str)
+    inft_power_dict_list = inft_power_collect_v2(power_data_list, hostname, dev_ip, dev_factory)
+    status_data_str = file_func.read_file(intf_desc_file_path)
+    status_data_list = data_section(status_data_str)
+    inft_status_dict_list = inft_status_collectv2(status_data_list)
+
+    for intf_power_list in inft_power_dict_list:
+        intf_power_list['管理状态'] = 'none'
+        intf_power_list['物理状态'] = 'none'
+        intf_power_list['协议状态'] = 'none'
+
+        for intf_status_list in inft_status_dict_list:
+            if intf_power_list['端口名'] == intf_status_list['端口名']:
+                intf_power_list['管理状态'] = intf_status_list['管理状态']
+                intf_power_list['物理状态'] = intf_status_list['物理状态']
+                intf_power_list['协议状态'] = intf_status_list['协议状态']
+                intf_power_list['端口描述'] = intf_status_list['端口描述']
+                break
+    file_func.write_csv(write_csv_path, inft_power_dict_list)
+    return inft_power_dict_list

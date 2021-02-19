@@ -10,14 +10,7 @@
 """
 # Start typing your code from here
 import re
-import csv
-
-
-def read_file(file_path):
-    with open(file_path, 'r', encoding='UTF-8-sig') as file:
-        data = file.read()
-        data.strip('\n')
-    return data
+import file_func
 
 
 def data_section(data):
@@ -46,7 +39,7 @@ def phy_intf_collect(data_list):
     return phy_intf_list
 
 
-def inft_GE_info_collect(intf_data_list):
+def inft_GE_info_collect(intf_data_list, hostname, dev_ip, dev_factory):
     intf_name = 'none'
     phy_state = 'DOWN'
     protocol_state = 'DOWN'
@@ -91,7 +84,7 @@ def inft_GE_info_collect(intf_data_list):
                 rx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
                 rx_power = rx_power_list[1].strip(' ')
                 rx_range = rx_power_list[-4:-2]
-            if data_row.startswith('Rx Power:'):
+            if data_row.startswith('Tx Power:'):
                 tx_power_list = re.split(r':|,|\[|\]|dBm', data_row)
                 tx_power = tx_power_list[1].strip(' ')
                 tx_range = tx_power_list[-4:-2]
@@ -109,7 +102,10 @@ def inft_GE_info_collect(intf_data_list):
         if data_row.startswith(
                 'Output bandwidth utilization') or 'output utility rate' in data_row:
             output_bandwidth = data_row.split(':')[1].strip(' ')
+    intf_info_dict['设备名'] = hostname
+    intf_info_dict['设备IP'] = dev_ip
     intf_info_dict['端口名'] = intf_name
+    intf_info_dict['管理状态'] = phy_state
     intf_info_dict['物理状态'] = phy_state
     intf_info_dict['协议状态'] = protocol_state
     intf_info_dict['端口描述'] = description
@@ -123,6 +119,10 @@ def inft_GE_info_collect(intf_data_list):
     intf_info_dict['入流量%'] = input_bandwidth
     intf_info_dict['出流量%'] = output_bandwidth
     intf_info_dict['收光状态'] = intf_optical
+    intf_info_dict['设备厂商'] = dev_factory
+    if phy_state == 'Administratively DOWN':
+        intf_info_dict['管理状态'] = 'DOWN'
+        intf_info_dict['物理状态'] = 'DOWN'
     if intf_info_dict['模块类型'] != 'none':
         if intf_info_dict['模块类型'] == "SingleMode":
             intf_info_dict['模块类型'] = '单模'
@@ -144,7 +144,7 @@ def inft_GE_info_collect(intf_data_list):
     return intf_info_dict
 
 
-def inft_100GE_info_collect(intf_data_list):
+def inft_100GE_info_collect(intf_data_list, hostname, dev_ip, dev_factory):
     intf_name = 'none'
     phy_state = 'DOWN'
     protocol_state = 'DOWN'
@@ -229,8 +229,10 @@ def inft_100GE_info_collect(intf_data_list):
         if data_row.startswith('Output bandwidth utilization') or (
                 'output utility rate' in data_row):
             output_bandwidth = data_row.split(':')[1].strip(' ')
-
+    intf_info_dict['设备名'] = hostname
+    intf_info_dict['设备IP'] = dev_ip
     intf_info_dict['端口名'] = intf_name
+    intf_info_dict['管理状态'] = phy_state
     intf_info_dict['物理状态'] = phy_state
     intf_info_dict['协议状态'] = protocol_state
     intf_info_dict['端口描述'] = description
@@ -244,6 +246,10 @@ def inft_100GE_info_collect(intf_data_list):
     intf_info_dict['入流量%'] = input_bandwidth
     intf_info_dict['出流量%'] = output_bandwidth
     intf_info_dict['收光状态'] = intf_optical
+    intf_info_dict['设备厂商'] = dev_factory
+    if phy_state == 'Administratively DOWN':
+        intf_info_dict['管理状态'] = 'DOWN'
+        intf_info_dict['物理状态'] = 'DOWN'
     if intf_info_dict['模块类型'] != 'none':
         if intf_info_dict['模块类型'] == "SingleMode" or intf_info_dict['模块类型'] \
                 == "single mode" or intf_info_dict['模块类型'] == "Single Mode":
@@ -268,35 +274,39 @@ def inft_100GE_info_collect(intf_data_list):
     return intf_info_dict
 
 
-def inft_info_collect(phy_intf_list):
+def inft_info_collect(phy_intf_list, hostname, dev_ip, dev_factory):
     inft_info_dict_list = []
     for intf_data_list in phy_intf_list:
         if intf_data_list[0].startswith('GigabitEthernet') and (
                 not intf_data_list[0].startswith('GigabitEthernet0/0/0')):
-            inft_info_dict_list.append(inft_GE_info_collect(intf_data_list))
+            inft_info_dict_list.append(
+                inft_GE_info_collect(
+                    intf_data_list,
+                    hostname,
+                    dev_ip,
+                    dev_factory))
         elif intf_data_list[0].startswith('100GE'):
-            inft_info_dict_list.append(inft_100GE_info_collect(intf_data_list))
+            inft_info_dict_list.append(
+                inft_100GE_info_collect(
+                    intf_data_list,
+                    hostname,
+                    dev_ip,
+                    dev_factory))
 
     # if inft_info_dict_list[0]['端口名'] == 'GigabitEthernet0/0/0':
     #     del inft_info_dict_list[0]
     return inft_info_dict_list
 
 
-def write_csv(file_name, list):
-    headers = list[0].keys()
-    with open(file_name, 'w', encoding='utf-8-sig', newline='') as file:
-        file_dict = csv.DictWriter(file, headers)
-        file_dict.writeheader()
-        file_dict.writerows(list)
-
-
-def inf_status(read_file_path, write_file_path):
+def inf_status(read_file_path, write_file_path, hostname, dev_ip, dev_factory):
     # read_file_path = r'D:\xuexi\cheshiwenjian\华为端口状态新省ER1.txt'
     # write_file_path = r'D:\xuexi\cheshiwenjian\MSE端口.csv'
-    data = read_file(read_file_path)
+    data = file_func.read_file(read_file_path)
     data_list = data_section(data)
     # print(data_list)
     phy_intf_list = phy_intf_collect(data_list)
-    # print(phy_intf_list)
-    inft_info_dict_list = inft_info_collect(phy_intf_list)
-    write_csv(write_file_path, inft_info_dict_list)
+    # print(phy_intf _list)
+    inft_info_dict_list = inft_info_collect(
+        phy_intf_list, hostname, dev_ip, dev_factory)
+    file_func.write_csv(write_file_path, inft_info_dict_list)
+    return inft_info_dict_list
