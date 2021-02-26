@@ -16,5 +16,5 @@ if file_path:
     for i in list_comm:
         crt.Screen.Send("\n" + i + "\n")
 
-        while (crt.Screen.WaitForStrings(["---- More ----"], 3)):
+        while (crt.Screen.WaitForStrings(["---- More ----"], 4)):
             crt.Screen.Send(" ")
