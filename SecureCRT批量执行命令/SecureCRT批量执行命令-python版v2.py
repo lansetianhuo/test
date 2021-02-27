@@ -9,9 +9,13 @@ def read_file(file_path):
 
 file_path = crt.Dialog.FileOpenDialog(
     "请选择一个命令存放文件", "打开", "a.txt", "打开文件 (*.txt)|*.txt")
-dev_name = str(crt.Dialog.Prompt("请输入设备提示名", "设备提示名", ""))
-dev_name_flag = crt.Dialog.MessageBox("请确认设备名是否为：" + dev_name, "设备名确认", 64 | 4)
-if file_path and dev_name:
+rowIndex = crt.Screen.CurrentRow
+colIndex = crt.Screen.CurrentColumn - 1
+prompt = crt.Screen.Get(rowIndex, 0, rowIndex, colIndex)
+prompt = prompt.strip()
+dev_name_flag = crt.Dialog.MessageBox(
+    "请确认设备名是否为：" + str(prompt), "设备名确认", 64 | 4)
+if file_path and prompt:
     if dev_name_flag != 7:
         list_comm = read_file(file_path).split('\n')
         crt.Screen.Synchronous = True
@@ -21,15 +25,15 @@ if file_path and dev_name:
             crt.Screen.Send(i + '\n')
             while True:
                 str = crt.Screen.WaitForStrings(
-                    ["---- More ----", "please wait...", dev_name], 20)
+                    [prompt, "---- More ----", "--More--", "please wait..."], 20)
                 if str == 1:
-                    crt.Screen.Send(" ")
-                elif str == 2:
-                    time.sleep(20)
-                elif str == 3:
                     break
+                elif str == 2 or str == 3:
+                    crt.Screen.Send(" ")
+                elif str == 4:
+                    time.sleep(20)
                 else:
-                    crt.Dialog.MessageBox("设备提示名错误", "错误信息", 16 | 0)
+                    crt.Dialog.MessageBox("提示符内容错误", "错误信息", 16 | 0)
                     flag = "false"
                     break
             if flag == "false":

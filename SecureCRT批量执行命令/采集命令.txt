@@ -1,4 +1,5 @@
 dis dev
+dis int bri 
 dis elabel
 dis ip int bri
 dis dev
