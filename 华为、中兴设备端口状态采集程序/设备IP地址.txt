@@ -1,4 +1,0 @@
-dev01,127.0.0.1,65001,telnet,zte
-dev02,127.0.0.1,65002,telnet,zte
-dev03,127.0.0.1,65003,telnet,huawei
-dev04,127.0.0.1,65004,telnet,huawei
